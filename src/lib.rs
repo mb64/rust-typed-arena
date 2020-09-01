@@ -78,6 +78,9 @@ use mem::MaybeUninit;
 #[cfg(test)]
 mod test;
 
+mod scoped;
+pub use scoped::SubArena;
+
 // Initial size in bytes.
 const INITIAL_SIZE: usize = 1024;
 // Minimum capacity. Must be larger than 0.
@@ -100,12 +103,12 @@ const MIN_CAPACITY: usize = 1;
 /// assert!(vegeta.level > 9000);
 /// ```
 pub struct Arena<T> {
-    chunks: RefCell<ChunkList<T>>,
+    pub(crate) chunks: RefCell<ChunkList<T>>,
 }
 
-struct ChunkList<T> {
-    current: Vec<T>,
-    rest: Vec<Vec<T>>,
+pub(crate) struct ChunkList<T> {
+    pub(crate) current: Vec<T>,
+    pub(crate) rest: Vec<Vec<T>>,
 }
 
 impl<T> Arena<T> {
@@ -400,7 +403,7 @@ impl<T> Arena<T> {
         let next_item_index = chunks.current.len();
 
         unsafe {
-        // Go through pointers, to make sure we never create a reference to uninitialized T.
+            // Go through pointers, to make sure we never create a reference to uninitialized T.
             let start = chunks.current.as_mut_ptr().offset(next_item_index as isize);
             let start_uninit = start as *mut MaybeUninit<T>;
             slice::from_raw_parts_mut(start_uninit, len) as *mut _
