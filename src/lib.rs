@@ -79,7 +79,7 @@ use mem::MaybeUninit;
 mod test;
 
 mod scoped;
-pub use scoped::SubArena;
+pub use scoped::{SubArena, SubArenaBuilder};
 
 // Initial size in bytes.
 const INITIAL_SIZE: usize = 1024;

@@ -103,7 +103,10 @@ fn test_alloc_uninitialized() {
         for i in 0..LIMIT {
             let slice = arena.alloc_uninitialized(i);
             for (j, elem) in slice.iter_mut().enumerate() {
-                ptr::write(elem.as_mut_ptr(), Node(None, j as u32, DropTracker(&drop_counter)));
+                ptr::write(
+                    elem.as_mut_ptr(),
+                    Node(None, j as u32, DropTracker(&drop_counter)),
+                );
             }
             assert_eq!(drop_counter.get(), 0);
         }
@@ -170,7 +173,8 @@ fn alloc_uninitialized_with_panic() {
         panic!("To drop the arena");
         // If it didn't panic, we would continue by initializing the second one and confirming by
         // .alloc_uninitialized();
-    })).unwrap_err();
+    }))
+    .unwrap_err();
     assert!(reached_first_init);
 }
 
@@ -370,4 +374,18 @@ fn size_hint_many_items() {
         let iter = arena.iter_mut();
         assert_size_hint(i, iter);
     }
+}
+
+#[test]
+fn covariant_sub_arena() {
+    let arena = Arena::<&'static i32>::new();
+    let x = arena.alloc(&5);
+    let y = arena.alloc(&2);
+    {
+        let a = 17;
+        let sub_arena = SubArenaBuilder::new(&arena).build();
+        let z = sub_arena.alloc(&a);
+        assert_eq!(*x + *y + *z, 24);
+    }
+    assert_eq!(*x + *y, 7);
 }
